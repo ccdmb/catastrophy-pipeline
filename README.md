@@ -2,15 +2,15 @@
 
 **Run the catastrophy classifier for many genomes.**.
 
-[![Build Status](https://travis-ci.com/nf-core/catastroflow.svg?branch=master)](https://travis-ci.com/nf-core/catastroflow)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
-
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
-[![Docker](https://img.shields.io/docker/automated/nfcore/catastroflow.svg)](https://hub.docker.com/r/nfcore/catastroflow)
 
 ## Introduction
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
+
+
+NB. Many of these instructions are boilerplate from the nf-core project and are not currently accurate.
+In the mean-time please raise an issue if you want to run this pipeline and need help.
 
 ## Quick Start
 
@@ -21,21 +21,21 @@ ii. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`s
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
-nextflow run nf-core/catastroflow -profile test,<docker/singularity/conda>
+nextflow run ccdmb/catastrophy-pipeline -profile test,<docker/singularity/conda>
 ```
 
 iv. Start running your own analysis!
 
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 ```bash
-nextflow run nf-core/catastroflow -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+nextflow run ccdmb/catastrophy-pipeline -profile <docker/singularity/conda> --genomes 'genomes/*.fasta' --dbcan_version 8
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
 
-The nf-core/catastroflow pipeline comes with documentation about the pipeline, found in the `docs/` directory:
+The catastrophy-pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Installation](https://nf-co.re/usage/installation)
 2. Pipeline configuration
