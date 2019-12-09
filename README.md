@@ -1,4 +1,4 @@
-# ![nf-core/catastroflow](docs/images/nf-core-catastroflow_logo.png)
+# catastrophy-pipeline
 
 **Run the catastrophy classifier for many genomes.**.
 
