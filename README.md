@@ -2,15 +2,14 @@
 
 **Run the catastrophy classifier for many genomes.**.
 
+**NB. Many of these instructions are boilerplate from the nf-core project and are not currently accurate. In the mean-time please raise an issue if you want to run this pipeline and need help.**
+
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
 
 ## Introduction
 
-The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
-
-
-NB. Many of these instructions are boilerplate from the nf-core project and are not currently accurate.
-In the mean-time please raise an issue if you want to run this pipeline and need help.
+The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner.
+It comes with docker containers making installation trivial and results highly reproducible.
 
 ## Quick Start
 
@@ -56,7 +55,6 @@ nf-core/catastroflow was originally written by Darcy Jones.
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/nf-core/catastroflow) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 

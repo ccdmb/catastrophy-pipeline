@@ -1,13 +1,13 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-catastroflow-1.0dev
+name: catastrophy-pipeline
 channels:
   - conda-forge
   - bioconda
   - defaults
+  - darcyabjones
 dependencies:
-  # TODO nf-core: Add required software dependencies here
-  - bioconda::fastqc=0.11.8
-  - bioconda::multiqc=1.7
-  - conda-forge::r-markdown=1.1
-  - conda-forge::r-base=3.6.1
+  - bioconda::hmmer=3.2.1
+  - darcyabjones::catastrophy=0.0.2
+  - wget
+  - gawk
