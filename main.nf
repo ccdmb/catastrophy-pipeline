@@ -151,7 +151,7 @@ workflow {
                     "using '--dbcan_version'."
         }
 
-        if ( !(params.dbcan_version in DBCAN_VERSIONS) ) {
+        if ( params.dbcan_version && !(params.dbcan_version in DBCAN_VERSIONS) ) {
             exit 1, "The dbcan version you provided is not supported. " +
                     "Valid options are ${DBCAN_VERSIONS}."
         }
