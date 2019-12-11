@@ -36,6 +36,58 @@ def helpMessage() {
 }
 
 
+def handle_dbcan_params(params) {
+    if ( (params.dbcan || params.dbcan_url) && !params.dbcan_version ) {
+        exit 1, "Please provide the dbcan version that you are providing " +
+                "using '--dbcan_version'."
+    }
+
+    if ( params.dbcan_version && !(params.dbcan_version in DBCAN_VERSIONS) ) {
+        exit 1, "The dbcan version you provided is not supported. " +
+                "Valid options are ${DBCAN_VERSIONS}."
+    }
+
+    // Set default version
+    dbcan_version = params.dbcan_version ?: DBCAN_VERSIONS[-1]
+
+    if ( params.dbcan ) {
+        dbcan_file = file(params.dbcan, checkIfExists: true)
+    } else {
+        url = params.dbcan_url ?: DBCAN_URLS[dbcan_version]
+        dbcan_file = download_dbcan(url)
+    }
+
+    return [dbcan_version, dbcan_file]
+}
+
+
+def handle_nomenclature_params(params) {
+    if ( !(params.nomenclature in NOMENCLATURES) ) {
+        exit 1, "The nomenclature you selected is not supported. " +
+                "Valid options are ${NOMENCLATURES}."
+    }
+
+    nomenclature = params.nomenclature
+
+    return nomenclature
+}
+
+
+def handle_proteomes_params(params) {
+
+    if (params.proteomes) {
+        // Can't use the .set {} syntax inside functions.
+        ch_proteomes = Channel
+            .fromPath(params.proteomes, checkIfExists: true, type: 'file')
+            .map { f -> [f.simpleName, f] }
+    } else {
+        exit 1, "Please provide one or more fasta files to the --proteome parameter."
+    }
+
+    return ch_proteomes
+}
+
+
 process download_dbcan {
     label "download"
     label "small_task"
@@ -52,38 +104,42 @@ process download_dbcan {
     """
 }
 
-process press_hmms {
+
+process hmmpress {
+
     label "hmmer"
     label "small_task"
 
     input:
-    path "dbcan.txt"
+    path "database.txt"
 
     output:
-    tuple path("dbcan.txt"),
-          path("dbcan.txt.h3f"),
-          path("dbcan.txt.h3i"),
-          path("dbcan.txt.h3m"),
-          path("dbcan.txt.h3p"), emit: pressed_hmms
+    tuple path("database.txt"),
+          path("database.txt.h3f"),
+          path("database.txt.h3i"),
+          path("database.txt.h3m"),
+          path("database.txt.h3p"), emit: pressed_hmms
 
     script:
     """
-    hmmpress dbcan.txt
+    hmmpress database.txt
     """
 }
 
+
 process hmmscan {
+
     label "hmmer"
     label "small_task"
 
     tag "${name}"
 
     input:
-    tuple path("dbcan.txt"),
-          path("dbcan.txt.h3f"),
-          path("dbcan.txt.h3i"),
-          path("dbcan.txt.h3m"),
-          path("dbcan.txt.h3p")
+    tuple path("database.txt"),
+          path("database.txt.h3f"),
+          path("database.txt.h3i"),
+          path("database.txt.h3m"),
+          path("database.txt.h3p")
     tuple val(name), path(proteome)
 
     output:
@@ -94,7 +150,7 @@ process hmmscan {
     """
     hmmscan \
         --domtblout "${name}.csv" \
-        dbcan.txt \
+        database.txt \
         "${proteome}" \
     > "${name}.txt"
     """
@@ -102,6 +158,7 @@ process hmmscan {
 
 
 process catastrophy {
+
     label "catastrophy"
     label "small_task"
 
@@ -127,61 +184,59 @@ process catastrophy {
 }
 
 
+workflow search_proteomes {
+
+    get:
+    database_file
+    proteomes_ch
+
+    main:
+    pressed_hmms = hmmpress(database_file)
+    (hmmscan_domtabs, hmmscan_txts) = hmmscan(pressed_hmms, proteomes_ch)
+
+    emit:
+    hmmscan_domtabs
+    hmmscan_txts
+}
+
+
+workflow classify_proteomes {
+
+    get:
+    dbcan_version
+    nomenclature
+    domtabs
+
+    main:
+    transposed_domtabs = domtabs
+        .toList()
+        .map { it.transpose() }
+
+    classified = catastrophy(dbcan_version, nomenclature, transposed_domtabs)
+
+    emit:
+    classified
+}
+
+
 workflow {
 
     main:
-        // Show help message
-        if (params.help) {
-            helpMessage()
-            exit 0
-        }
+    // Show help message
+    if (params.help) {
+        helpMessage()
+        exit 0
+    }
 
-        // Validate input and setup channels.
-        if (params.proteomes) {
-            Channel
-                .fromPath(params.proteomes, checkIfExists: true, type: 'file')
-                .map { f -> [f.simpleName, f] }
-                .set { ch_proteomes }
-        } else {
-            exit 1, "Please provide one or more fasta files to the --proteome parameter."
-        }
+    proteomes_ch = handle_proteomes_params(params)
+    (dbcan_version, dbcan_file) = handle_dbcan_params(params)
+    nomenclature = handle_nomenclature_params(params)
 
-        if ( (params.dbcan || params.dbcan_url) && !params.dbcan_version ) {
-            exit 1, "Please provide the dbcan version that you are providing " +
-                    "using '--dbcan_version'."
-        }
-
-        if ( params.dbcan_version && !(params.dbcan_version in DBCAN_VERSIONS) ) {
-            exit 1, "The dbcan version you provided is not supported. " +
-                    "Valid options are ${DBCAN_VERSIONS}."
-        }
-
-        if ( !(params.nomenclature in NOMENCLATURES) ) {
-            exit 1, "The nomenclature you selected is not supported. " +
-                    "Valid options are ${NOMENCLATURES}."
-        }
-
-        // Set default version
-        dbcan_version = params.dbcan_version ?: DBCAN_VERSIONS[-1]
-        nomenclature = params.nomenclature
-
-        if ( params.dbcan ) {
-            dbcan_file = file(params.dbcan, checkIfExists: true)
-        } else {
-            url = params.dbcan_url ?: DBCAN_URLS[dbcan_version]
-            dbcan_file = download_dbcan(url)
-        }
-
-        pressed_hmms = press_hmms(dbcan_file)
-        (hmmscan_domtabs, hmmscan_txts) = hmmscan(pressed_hmms, ch_proteomes)
-        transposed_domtabs = hmmscan_domtabs
-            .toList()
-            .map { it.transpose() }
-            .first()
-        classified = catastrophy(dbcan_version, nomenclature, transposed_domtabs)
+    (hmmscan_domtabs, hmmscan_txts) = search_proteomes(dbcan_file, proteomes_ch)
+    //classifications_file = classify_proteomes(dbcan_version, nomenclature, hmmscan_domtabs)
 
     publish:
-        hmmscan_domtabs to: "${params.outdir}/matches"
-        hmmscan_txts to: "${params.outdir}/matches"
-        classified to: "${params.outdir}"
+    hmmscan_domtabs to: "${params.outdir}/matches"
+    hmmscan_txts to: "${params.outdir}/matches"
+    //classifications_file to: "${params.outdir}"
 }
