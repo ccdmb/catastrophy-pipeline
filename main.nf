@@ -3,14 +3,15 @@
 nextflow.preview.dsl = 2
 
 // Set some globals
-DBCAN_VERSIONS = ["v6", "v7", "v8"]
+DBCAN_VERSIONS = ["v4", "v5", "v6", "v7", "v8"]
 DBCAN_URLS = [
+    "v4": "http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-old@UGA/dbCAN-fam-HMMs.txt.v4",
+    "v5": "http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-old@UGA/dbCAN-fam-HMMs.txt.v5",
     "v6": "http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-HMMdb-V6.txt",
     "v7": "http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-HMMdb-V7.txt",
     "v8": "http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-HMMdb-V8.txt",
 ]
 
-NOMENCLATURES = ["nomenclature1", "nomenclature2", "nomenclature3"]
 
 def helpMessage() {
     log.info "# CATAStrophy-pipeline"
@@ -24,6 +25,9 @@ def helpMessage() {
 
     Mandatory arguments:
       --proteomes                   Path to input proteomes as fasta files (Glob patterns must be surrounded with quotes).
+      --dbcan                       An HMMER3 formatted database from dbcan.
+      --dbcan_version               The version of dbcan used.
+      --dbcan_url                   The URL to an HMMER3 formatted database to download.
       -profile                      Configuration profile to use. Can use multiple (comma separated)
                                     Available: conda, docker, singularity, awsbatch, test and more.
 
@@ -58,18 +62,6 @@ def handle_dbcan_params(params) {
     }
 
     return [dbcan_version, dbcan_file]
-}
-
-
-def handle_nomenclature_params(params) {
-    if ( !(params.nomenclature in NOMENCLATURES) ) {
-        exit 1, "The nomenclature you selected is not supported. " +
-                "Valid options are ${NOMENCLATURES}."
-    }
-
-    nomenclature = params.nomenclature
-
-    return nomenclature
 }
 
 
@@ -164,20 +156,23 @@ process catastrophy {
 
     input:
     val version
-    val nomenclature
-    tuple val(names), path(domtabs)
+    val names
+    path domtabs
 
     output:
     path "catastrophy.tsv"
+    path "catastrophy_pca.tsv"
+    path "catastrophy_counts.tsv"
 
     script:
     """
     catastrophy \
         --format "hmmer_domtab" \
         --model "${version}" \
-        --nomenclature "${nomenclature}" \
         --outfile "catastrophy.tsv" \
-        --label ${names} \
+        --pca "catastrophy_pca.tsv" \
+        --counts "catastrophy_counts.tsv" \
+        --label ${names.join(" ")} \
         -- \
         ${domtabs}
     """
@@ -204,18 +199,26 @@ workflow classify_proteomes {
 
     get:
     dbcan_version
-    nomenclature
     domtabs
 
     main:
-    transposed_domtabs = domtabs
-        .toList()
-        .map { it.transpose() }
+    domtabs_forked = domtabs
+        .fork {
+            name: it[0]
+            file: it[1]
+        }
 
-    classified = catastrophy(dbcan_version, nomenclature, transposed_domtabs)
+
+    (classified, pca, counts) = catastrophy(
+        dbcan_version,
+        domtabs_forked.name.collect(),
+        domtabs_forked.file.collect()
+    )
 
     emit:
     classified
+    pca
+    counts
 }
 
 
@@ -230,13 +233,14 @@ workflow {
 
     proteomes_ch = handle_proteomes_params(params)
     (dbcan_version, dbcan_file) = handle_dbcan_params(params)
-    nomenclature = handle_nomenclature_params(params)
 
     (hmmscan_domtabs, hmmscan_txts) = search_proteomes(dbcan_file, proteomes_ch)
-    //classifications_file = classify_proteomes(dbcan_version, nomenclature, hmmscan_domtabs)
+    (classifications_file, pca_file, counts_file) = classify_proteomes(dbcan_version, hmmscan_domtabs)
 
     publish:
     hmmscan_domtabs to: "${params.outdir}/matches"
     hmmscan_txts to: "${params.outdir}/matches"
-    //classifications_file to: "${params.outdir}"
+    classifications_file to: "${params.outdir}"
+    pca_file to: "${params.outdir}"
+    counts_file to: "${params.outdir}"
 }

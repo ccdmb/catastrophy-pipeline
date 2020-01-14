@@ -1,15 +1,21 @@
 # catastrophy-pipeline
 
-**Run the catastrophy classifier for many genomes.**.
-
-**NB. Many of these instructions are boilerplate from the nf-core project and are not currently accurate. In the mean-time please raise an issue if you want to run this pipeline and need help.**
+Run the [catastrophy fungal trophy classifier](https://github.com/ccdmb/catastrophy) for many genomes.
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.32.0-brightgreen.svg)](https://www.nextflow.io/)
 
+
 ## Introduction
+
+This pipeline automates the process of running HMMER3 and CATAStrophy on many genomes.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner.
 It comes with docker containers making installation trivial and results highly reproducible.
+
+This documentation is a bit sparse right now.
+We're all time poor.
+If you are having trouble, please don't hesitate to raise an issue on github or email me.
+
 
 ## Quick Start
 
@@ -25,41 +31,24 @@ nextflow run ccdmb/catastrophy-pipeline -profile test,<docker/singularity/conda>
 
 iv. Start running your own analysis!
 
-<!-- TODO nf-core: Update the default command above used to run the pipeline -->
 ```bash
-nextflow run ccdmb/catastrophy-pipeline -profile <docker/singularity/conda> --genomes 'genomes/*.fasta' --dbcan_version 8
+nextflow run ccdmb/catastrophy-pipeline -profile <docker/singularity/conda> --proteomes 'proteomes/*.fasta' --dbcan_version 8
 ```
 
-See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
+## Parameters
 
-## Documentation
-
-The catastrophy-pipeline comes with documentation about the pipeline, found in the `docs/` directory:
-
-1. [Installation](https://nf-co.re/usage/installation)
-2. Pipeline configuration
-    * [Local installation](https://nf-co.re/usage/local_installation)
-    * [Adding your own system config](https://nf-co.re/usage/adding_own_config)
-    * [Reference genomes](https://nf-co.re/usage/reference_genomes)
-3. [Running the pipeline](docs/usage.md)
-4. [Output and how to interpret the results](docs/output.md)
-5. [Troubleshooting](https://nf-co.re/usage/troubleshooting)
-
-<!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
-
-## Credits
-
-nf-core/catastroflow was originally written by Darcy Jones.
-
-## Contributions and Support
-
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+| Parameter | default | description |
+| :---      | :---    | :---        |
+| `--help` | flag | Show help text and exit. |
+| `--proteomes` | File or glob of files. | The proteins in fasta format that catastrophy should classify. Each file is treated as a separate organism. |
+| `--dbcan_version` | 4,5,6,7 or 8 | The version of dbCAN to count CAZymes from. By default, will attempt to download the correct dbCAN database for this version and use that. |
+| `--dbcan` | File | A copy of the dbCAN HMMER3 formatted database of CAZymes. If you use this option, you must also provide the `--dbcan_version` number. |
+| `--dbcan_url` | URL | The url to download the dbCAN HMMER3 formatted database from. If you use this option, you must also provide the `--dbcan_version` number. |
+| `--outdir` | `results` | The directory to write results to. |
 
 
-## Citation
+I highly recommend that you use the `--dbcan_version` flag without `--dbcan` or `--dbcan_url`.
+This will ensure that the correct model and database versions are used.
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
-<!-- If you use  nf-core/catastroflow for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-You can cite the `nf-core` pre-print as follows:  
-Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
+Nextflow can run tasks in parallel, I will add some documentation to this later.
+Generally, it should do some of this automatically but more advanced things like using supercomputers or distributed cloud setups are more complex.
