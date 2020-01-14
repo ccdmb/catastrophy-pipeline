@@ -8,6 +8,6 @@ channels:
   - darcyabjones
 dependencies:
   - bioconda::hmmer=3.2.1
-  - darcyabjones::catastrophy=0.0.2
+  - darcyabjones::catastrophy=0.0.3
   - wget
   - gawk
