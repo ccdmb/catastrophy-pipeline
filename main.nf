@@ -181,7 +181,7 @@ process catastrophy {
 
 workflow search_proteomes {
 
-    get:
+    take:
     database_file
     proteomes_ch
 
@@ -197,13 +197,13 @@ workflow search_proteomes {
 
 workflow classify_proteomes {
 
-    get:
+    take:
     dbcan_version
     domtabs
 
     main:
     domtabs_forked = domtabs
-        .fork {
+        .multiMap {
             name: it[0]
             file: it[1]
         }
@@ -222,6 +222,30 @@ workflow classify_proteomes {
 }
 
 
+
+
+// Until we get some clarity on what will replace the publish
+// workflow section, this is the workaround.
+// I don't love it.
+process publish_it {
+
+    label "process_low"
+    label "posix"
+
+    publishDir "${params.outdir}", saveAs: { name }
+
+    input:
+    tuple val(name), path("infile")
+
+    output:
+    path "infile", includeInputs: true
+
+    script:
+    """
+    """
+}
+
+
 workflow {
 
     main:
@@ -237,10 +261,10 @@ workflow {
     (hmmscan_domtabs, hmmscan_txts) = search_proteomes(dbcan_file, proteomes_ch)
     (classifications_file, pca_file, counts_file) = classify_proteomes(dbcan_version, hmmscan_domtabs)
 
-    publish:
-    hmmscan_domtabs to: "${params.outdir}/matches"
-    hmmscan_txts to: "${params.outdir}/matches"
-    classifications_file to: "${params.outdir}"
-    pca_file to: "${params.outdir}"
-    counts_file to: "${params.outdir}"
+    hmmscan_domtabs.map { n, f -> ["matches/${f.name}", f] }.mix(
+        hmmscan_txts.map { n, f -> ["matches/${f.name}", f] },
+        classifications_file.map { ["${it.name}", it] },
+        pca_file.map { ["${it.name}", it] },
+        counts_file.map { ["${it.name}", it] }
+    ) | publish_it
 }
