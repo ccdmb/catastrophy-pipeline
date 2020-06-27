@@ -9,7 +9,7 @@ Run the [catastrophy fungal trophy classifier](https://github.com/ccdmb/catastro
 
 This pipeline automates the process of running HMMER3 and CATAStrophy on many genomes.
 
-The pipeline is built using [Nextflow](https://www.nextflow.io) (version >=19.11.0-edge), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner.
+The pipeline is built using [Nextflow](https://www.nextflow.io) (version >=20.01.0), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner.
 It comes with docker containers making installation trivial and results highly reproducible.
 
 This documentation is a bit sparse right now.
