@@ -4,6 +4,11 @@ Run the [catastrophy fungal trophy classifier](https://github.com/ccdmb/catastro
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A520.01.0-brightgreen.svg)](https://www.nextflow.io/)
 
+**The python package now bundles a pipeline that runs HMMER in parallel for you.
+This nextflow pipeline won't be maintained into the future.**
+
+Details of the new pipeline are here: [https://github.com/ccdmb/catastrophy#using-the-catastrophy-pipeline](https://github.com/ccdmb/catastrophy#using-the-catastrophy-pipeline)
+
 
 ## Introduction
 
